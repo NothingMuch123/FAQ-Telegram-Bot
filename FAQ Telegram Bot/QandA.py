@@ -1,6 +1,6 @@
 from Action import Action
 
-class Topic(Action):
+class QandA(Action):
     def __init__(self, q : str, a : str) -> None:
         super().__init__(q)
 
