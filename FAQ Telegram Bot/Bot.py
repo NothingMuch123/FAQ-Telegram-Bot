@@ -24,7 +24,7 @@ def SendMediaGroup(user):
     img2.close()
 
 
-def SendReplyMarkup():
+def GenerateReplyMarkup():
     r = types.InlineKeyboardMarkup()
     r.add(types.InlineKeyboardButton("Test reply button", callback_data="test"))
     return r
@@ -33,7 +33,7 @@ def SendReplyMarkup():
 @bot.message_handler(commands=["start"])
 def Start_Command(m):
     # Send main message
-    SendMessage(m.chat.id, "Test message", SendReplyMarkup())
+    SendMessage(m.chat.id, "Test message", GenerateReplyMarkup())
 
 
 @bot.message_handler(commands=["media"])
