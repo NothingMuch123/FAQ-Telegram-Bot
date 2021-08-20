@@ -10,8 +10,8 @@ credentials = json.load(open(DataDirectory + "Credentials.json", "r"))
 bot = bot = TeleBot(credentials["token"])
     
 
-def SendMessage(user, message):
-    bot.send_message(user, message)
+def SendMessage(user, message, reply_markup = None):
+    bot.send_message(user, message, reply_markup=reply_markup)
 
 
 def SendMediaGroup(user):
@@ -24,10 +24,27 @@ def SendMediaGroup(user):
     img2.close()
 
 
+def SendReplyMarkup():
+    r = types.InlineKeyboardMarkup()
+    r.add(types.InlineKeyboardButton("Test reply button", callback_data="test"))
+    return r
+
+
 @bot.message_handler(commands=["start"])
 def Start_Command(m):
     # Send main message
-    SendMessage(m.chat.id, "Test message")
+    SendMessage(m.chat.id, "Test message", SendReplyMarkup())
+
+
+@bot.message_handler(commands=["media"])
+def Media_Command(m):
+    # Send media
+    SendMediaGroup(m.chat.id)
+
+
+@bot.callback_query_handler(lambda query : query.data != "")
+def Test_Callback(query):
+    SendMessage(query.message.chat.id, "Callback called")
 
 
 # Start polling for messages
