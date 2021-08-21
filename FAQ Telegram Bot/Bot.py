@@ -1,9 +1,10 @@
 import json
 from telebot import TeleBot, types
 
+# Custom imports
+from Constants import DataDirectory
 
 # Load credentials
-DataDirectory = "FAQ Telegram Bot/Data/"
 credentials = json.load(open(DataDirectory + "Credentials.json", "r"))
 
 # Create bot
@@ -25,9 +26,13 @@ def SendMediaGroup(user):
 
 
 def GenerateReplyMarkup():
-    r = types.InlineKeyboardMarkup()
-    r.add(types.InlineKeyboardButton("Test reply button", callback_data="test"))
-    return r
+    return types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Test reply button", callback_data="test"))
+
+
+# Capture all text messages that are not commands
+@bot.message_handler(func=lambda m : not m.text.startswith("/"), content_types=["text"])
+def AnyTextMessage(m):
+    SendMessage(m.chat.id, "What?")
 
 
 @bot.message_handler(commands=["start"])
