@@ -1,0 +1,1 @@
+DataDirectory = "FAQ Telegram Bot/Data/"
