@@ -25,7 +25,7 @@ class QandA(Action):
 
 
     # Render the feedback when selected
-    def Selected(self, callback):
+    def Selected(self, callback : str, state):
         return self.DisplayMessage()
 
     

@@ -16,7 +16,7 @@ class Category(Action):
         self.ActionList = []
 
         # Set up current selected action as none
-        self.SelectedAction = None
+        #self.SelectedAction = None
 
 
     def DisplayMessage(self):
@@ -24,25 +24,29 @@ class Category(Action):
 
 
     # Render the feedback when selected
-    def Selected(self, callback):
-
+    def Selected(self, callback : str, state):
         # If action selected, proceed further into hierarchy
-        if self.SelectedAction:
-            return self.SelectedAction.Selected(callback)
+        if len(state) > 0:
+            message, markup, newState = self.ActionList[state[0]].Selected(callback, state[1:])
+            newState.insert(0, state[0])
+            return message, markup, newState
 
         # Loop through list of actions
+        actionCount = 0
         for a in self.ActionList:
             # Found action that matches callback
             if a.DisplayName() == callback:
                 # Check action type
                 if type(a) is Category:
-                    self.SelectedAction = a
-                    return a.DisplayMessage()
+                    message, markup = a.DisplayMessage()
+                    return message, markup, [actionCount]
                 elif type(a) is QandA:
-                    self.SelectedAction = None
-                    return a.Selected(callback), self.GenerateKeyboardMarkup()
+                    return a.Selected(callback, None), self.GenerateKeyboardMarkup(), []
 
-        return self.Message, self.GenerateKeyboardMarkup()
+            # Next
+            actionCount += 1
+
+        return self.Message, self.GenerateKeyboardMarkup(), []
 
     
     def ToString(self, level) -> str:

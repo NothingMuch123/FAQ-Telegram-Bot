@@ -1,6 +1,6 @@
 import json
 from telebot import TeleBot, types
-from telebot.types import InputMediaPhoto, InputMediaVideo, InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import InputMediaPhoto, InputMediaVideo, InlineKeyboardMarkup, InlineKeyboardButton, User
 
 # Custom imports
 from Constants import DataDirectory, FAQScriptName
@@ -66,9 +66,16 @@ def AnyTextMessage(m):
 
 @bot.message_handler(commands=["start"])
 def Start_Command(m):
-    # Send main message
-    message, markup = FAQScript.Selected(None)
-    SendMessage(m.chat.id, message, markup)
+    ### Send main message ###
+    # Retrieve message and markup
+    message, markup, newState = FAQScript.Selected(None, [])
+
+    # Reset user state
+    user = m.chat.id
+    UserStates[user] = []
+
+    # Send message
+    SendMessage(user, message, markup)
 
 
 @bot.message_handler(commands=["media"])
@@ -87,8 +94,17 @@ def Media_Command(m):
 
 @bot.callback_query_handler(lambda query : query.data != "")
 def Test_Callback(query):
-    message, markup = FAQScript.Selected(query.data)
-    SendMessage(query.message.chat.id, message, markup)
+    # Fetch user id
+    user = query.message.chat.id
+
+    # Fetch message and markup
+    message, markup, newState = FAQScript.Selected(query.data, UserStates[user] if user in UserStates else [])
+
+    # Update new state
+    UserStates[user] = newState
+
+    # Send message
+    SendMessage(user, message, markup)
 
 
 ### Bot execution starts here
