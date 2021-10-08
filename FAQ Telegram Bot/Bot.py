@@ -35,10 +35,12 @@ def SendMessage(user, message, reply_markup = None):
         bot.send_message(user, message, reply_markup=reply_markup)
     elif mType is InputMediaPhoto or mType is InputMediaVideo:
         # Send media
+        caption = message.caption
+        message.caption = None
         bot.send_media_group(user, [message])
 
         # Send message after media
-        bot.send_message(user, message.caption, reply_markup=reply_markup)
+        bot.send_message(user, caption, reply_markup=reply_markup)
 
         # Close media file
         message.media.close()
