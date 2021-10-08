@@ -14,3 +14,6 @@ VidExtensions = [".mp3", ".mp4"]
 MEDIA_NONE = 0
 MEDIA_IMAGE = 1
 MEDIA_VIDEO = 2
+
+# Inline Keyboard Button
+KeyboardButton_Back = "Back"

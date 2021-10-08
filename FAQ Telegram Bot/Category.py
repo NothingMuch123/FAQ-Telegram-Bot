@@ -1,11 +1,16 @@
-from typing import Tuple
+# Telebot imports
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
+
+# Constant imports
+from Constants import KeyboardButton_Back
+
+# Class imports
 from Action import Action
 from QandA import QandA
 
 
 class Category(Action):
-    def __init__(self, name : str, message : str) -> None:
+    def __init__(self, name : str, message : str, skipBack = False) -> None:
         super().__init__(name)
 
         # Set up message if not available
@@ -15,8 +20,7 @@ class Category(Action):
             self.Message = message
         self.ActionList = []
 
-        # Set up current selected action as none
-        #self.SelectedAction = None
+        self.SkipBack = skipBack
 
 
     def DisplayMessage(self):
@@ -26,10 +30,15 @@ class Category(Action):
     # Render the feedback when selected
     def Selected(self, callback : str, state):
         # If action selected, proceed further into hierarchy
-        if len(state) > 0:
-            message, markup, newState = self.ActionList[state[0]].Selected(callback, state[1:])
-            newState.insert(0, state[0])
-            return message, markup, newState
+        stateLength = len(state)
+        if stateLength > 0:
+            # Check if back is pressed
+            if stateLength == 1 and callback == KeyboardButton_Back:
+                return self.Message, self.GenerateKeyboardMarkup(), []
+            else:
+                message, markup, newState = self.ActionList[state[0]].Selected(callback, state[1:])
+                newState.insert(0, state[0])
+                return message, markup, newState
 
         # Loop through list of actions
         actionCount = 0
@@ -60,8 +69,13 @@ class Category(Action):
     def GenerateKeyboardMarkup(self) -> InlineKeyboardMarkup:
         k = InlineKeyboardMarkup()
 
+        # Add all actions as keyboard button
         for a in self.ActionList:
             name = a.DisplayName()
             k.add(InlineKeyboardButton(name, callback_data=name))
+
+        # Add back keyboard button
+        if not self.SkipBack:
+            k.add(InlineKeyboardButton(KeyboardButton_Back, callback_data=KeyboardButton_Back))
 
         return k
