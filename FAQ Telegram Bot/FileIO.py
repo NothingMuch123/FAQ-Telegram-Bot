@@ -25,10 +25,12 @@ def TraverseScript(script : Category, level : int) -> Category:
 def LoadScript(path : str, script : Category):
     # Open script file
     f = open(path, "r")
-    # json.dump({"var1":"val1", "var2":"val2"}, f, indent=-1)
     
+    # Data for Action
     buffer = ""
     level = 0
+
+    # Loop through lines in file
     for line in f:
         # Strip line of trailing white spaces, \n, and \t
         line = line.strip().rstrip("\n").lstrip("\t")
@@ -76,5 +78,3 @@ def LoadScript(path : str, script : Category):
 
     # Close script file
     f.close()
-
-#LoadScript(DataDirectory + "Test.json", Category("Main", "Main Message"))
