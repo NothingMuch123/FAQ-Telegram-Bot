@@ -1,6 +1,3 @@
-from typing import Tuple
-from telebot.types import InlineKeyboardMarkup
-
 class Action:
     def __init__(self, name : str) -> None:
         self.Name = name

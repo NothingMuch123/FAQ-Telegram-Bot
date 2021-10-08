@@ -1,7 +1,10 @@
+# Python libs import
 import json
 
+# Constant imports
 from Constants import ScriptLevel, IdentifierKey_Category, IdentifierKey_QandA
 
+# Class imports
 from Category import Category
 from QandA import QandA
 
