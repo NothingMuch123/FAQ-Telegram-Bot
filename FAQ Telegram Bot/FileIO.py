@@ -78,3 +78,13 @@ def LoadScript(path : str, script : Category):
 
     # Close script file
     f.close()
+
+
+def SaveScript(path : str, script : Category):
+    # Open script file
+    f = open(path, "r")
+
+    # Save Script
+    
+    # Close script file
+    f.close()
