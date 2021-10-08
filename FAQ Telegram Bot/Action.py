@@ -6,11 +6,19 @@ class Action:
         self.Name = name
 
 
-    # Render the action for display
-    def Display(self) -> Tuple[str, InlineKeyboardMarkup]:
-        return "", None
+    # Return the name
+    def DisplayName(self) -> str:
+        return self.Name
+
+
+    def DisplayMessage(self):
+        pass
 
 
     # Render the feedback when selected
-    def Selected(self, callback) -> str:
-        return ""
+    def Selected(self, callback):
+        pass
+
+    
+    def ToString(self, level) -> str:
+        pass
