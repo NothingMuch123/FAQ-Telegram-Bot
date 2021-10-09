@@ -11,6 +11,7 @@ from BotUser import BotUser
 
 # Constant imports
 from Constants import DataDirectory, FAQScriptName
+from Constants import ROLE_ADMIN, ROLE_LOCKED
 
 # Method imports
 from FileIO import LoadScript
@@ -27,8 +28,6 @@ credentialsFile.close()
 
 # Create bot
 bot = TeleBot(credentials["token"])
-
-admin = False
 
 ### Helper Functions ###
 
@@ -76,11 +75,6 @@ def Start_Command(m):
 
     # Send message
     SendMessage(m.chat.id, message, markup)
-    
-    # Send main message
-    #SendMessage(m.chat.id, "Welcome!")
-    #markup = types.InlineKeyboardMarkup()
-    #markup = CreateButton(m, markup, "Press here to begin", 'media')
 
 
 @bot.message_handler(commands=["help"])
@@ -114,21 +108,30 @@ def FAQ_Callback(query):
 
 @bot.message_handler(commands=["login"])
 def Login_Command(m):
-    global admin
-    if admin == False:
-        if m.text.split(" ")[1] == credentials["password"]:
-            admin = True
-            AdminLoggedin(m)
-        else:
-            SendMessage(m.chat.id, "Wrong password, try again.")
-    else:
-        SendMessage(m.chat.id, "You are already logged in.")
+    # Fetch user
+    user = FetchUser(m.chat.id)
 
-def Check_Password(m):
-    if m.text == credentials["password"]:
-        AdminLoggedin(m)
+    # Check user is locked
+    if user.Role == ROLE_LOCKED:
+        SendMessage(m.chat.id, "Unable to login")
     else:
-        SendMessage(m.chat.id, "Wrong password, try again.")
+        # Check user is admin
+        if user.Role != ROLE_ADMIN:
+            # Split command message to get password
+            split = m.text.split(" ")
+            if len(split) > 1 and split[1] == credentials["password"]:
+                # Update user role to admin upon login
+                user.Role = ROLE_ADMIN
+                SendMessage(m.chat.id, "Login successful")
+            else:
+                # Incorrect password entered
+                user.AttemptLoginFail()
+                SendMessage(m.chat.id, "Incorrect password entered, try again.")
+        else:
+            SendMessage(m.chat.id, "You are already logged in.")
+            
+    # Delete login command message for security
+    bot.delete_message(m.chat.id, m.message_id)
 
 
 def AdminLoggedin(m):
