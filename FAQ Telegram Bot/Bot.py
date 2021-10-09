@@ -12,7 +12,7 @@ from BotUser import BotUser
 
 # Constant imports
 from Constants import DataDirectory, FAQScriptName
-from Constants import ROLE_ADMIN, ROLE_LOCKED
+from Constants import ROLE_DEFAULT, ROLE_ADMIN, ROLE_LOCKED
 from Constants import CALLBACK_QUESTIONS_CREATE_QNA, CALLBACK_QUESTIONS_CREATE_CATEGORY, CALLBACK_QUESTIONS_EDIT
 from Constants import APPSTATE_FAQ, APPSTATE_QUESTIONS, APPSTATE_QUESTIONS_CREATE_CATEGORY, APPSTATE_QUESTIONS_CREATE_QNA
 from Constants import KEY_CREATE_QUESTION_Q, KEY_CREATE_QUESTION_A, KEY_CREATE_QUESTION_C
@@ -87,6 +87,11 @@ def Start_Command(m):
 def Help_Command(m):
     # Send media
     SendMessage(m.chat.id, "/start\n/media")
+
+
+@bot.message_handler(commands=["feedback"])
+def Feedback_Command(m):
+    pass
 
 ### End of Generic Command handling ###
 
@@ -267,6 +272,18 @@ def Login_Command(m):
             
     # Delete login command message for security
     bot.delete_message(user.ID, m.message_id)
+
+
+@bot.message_handler(commands=["logout"])
+def Logout_Command(m):
+    # Fetch user
+    user = FetchUser(m.chat.id)
+    
+    if user.Role == ROLE_ADMIN:
+        user.Role = ROLE_DEFAULT
+        SendMessage(user.ID, "Logout successfully")
+    else:
+        SendMessage(user.ID, "Not logged in")
 
 
 @bot.message_handler(commands=["questions"])
