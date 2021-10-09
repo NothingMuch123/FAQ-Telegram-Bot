@@ -1,28 +1,16 @@
-- Fruits
--- What is a dragonfruit? : "Fruits/dragonfruit.jpg" It is a fruit with a lot of seeds.
--- Fruits that are star
---- What is a starfruit? : Starfruit
-
-
-
-- 
+-
 { 
 	"Name" : "Fruits", 
-	"Answer" : None 
+	"Message" : "What do you like to know more about Fruits?" 
 }
--- 
+--
 	{ 
-		"Name" : "What is a dragonfruit?", 
+		"Question" : "What is a watermelon?", 
 		"Answer" : "It is a fruit with a lot of seeds.", 
-		"Media" : "Fruits/dragonfruit.jpg"
+		"Media" : "Fruits/watermelon.png"
 	}
--- 
-	{ 
-		"Name" : "Fruits that are star", 
-		"Answer" : None 
-	}
---- 
-		{ 
-			"Name" : "What is a starfruit?", 
-			"Answer" : "Starfruit" 
-		}
+-
+{ 
+	"Question" : "Fruits that are star", 
+	"Answer" : "StarFruit!" 
+}

@@ -4,3 +4,4 @@ FAQ Telegram Bot/__pycache__
 FAQ Telegram Bot/Data/Credentials.json
 FAQ Telegram Bot/Data/**/*.png
 FAQ Telegram Bot/Data/**/*.jpg
+.vscode
