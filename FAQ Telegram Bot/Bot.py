@@ -46,32 +46,16 @@ def SendMessage(user, message, reply_markup = None):
         # Close media file
         message.media.close()
 
-@bot.message_handler(commands=["picture"])
-def SendMediaGroup(user):
-    # Send image
-    img1 = open(DataDirectory + "Fruits.jpg", "rb")
-    img2 = open(DataDirectory + "Vegetables.jpg", "rb")
-    imgs = [InputMediaPhoto(img1, "Fruits"), InputMediaPhoto(img2, "Vegetables")]
-    bot.send_media_group(user, imgs)
-    img1.close()
-    img2.close()
-
-def GenerateReplyMarkup(text):
-    return InlineKeyboardMarkup().add(InlineKeyboardButton(text, callback_data="test"))
 
 def CreateButton(m,markup,text,callback):
     a = InlineKeyboardButton(text,callback_data= callback)
     markup.add(a)
     return markup
 
-#Capture all text messages that are not commands
-#@bot.message_handler(func=lambda m : not m.text.startswith("/"), content_types=["text"])
-#def AnyTextMessage(m):
-#    SendMessage(m.chat.id, "Command not found, type /start to begin or /help to find possible commands.")
-
+# Capture all text messages that are not commands
 @bot.message_handler(func=lambda m : not m.text.startswith("/"), content_types=["text"])
 def AnyTextMessage(m):
-    SendMessage(m.chat.id, "Unknown command.")
+    SendMessage(m.chat.id, "Type /start to begin or /help to find possible commands.")
 
 ### Command handling ###
 
@@ -93,12 +77,29 @@ def Start_Command(m):
     #markup = types.InlineKeyboardMarkup()
     #markup = CreateButton(m, markup, "Press here to begin", 'media')
 
-### End of command handling ###
+### End of Command handling ###
 
-@bot.message_handler(commands=["help"])
-def Help_Command(m):
-    # Send media
-    SendMessage(m.chat.id, "/start\n/media")
+
+### Callback Query handling ###
+
+@bot.callback_query_handler(lambda query : query.data != "")
+def FAQ_Callback(query):
+    # Fetch user id
+    user = query.message.chat.id
+
+    # Fetch message and markup
+    message, markup, newState = FAQScript.Selected(query.data, UserStates[user] if user in UserStates else [])
+
+    # Update new state
+    UserStates[user] = newState
+
+    # Send message
+    SendMessage(user, message, markup)
+
+### End of CallBack Query handling ###
+
+
+### Admin Functions ###
 
 @bot.message_handler(commands=["login"])
 def Login_Command(m):
@@ -118,6 +119,7 @@ def Check_Password(m):
     else:
         SendMessage(m.chat.id, "Wrong password, try again.")
 
+
 def AdminLoggedin(m):
     cid = m.chat.id
     bot.delete_message(cid, m.message_id)
@@ -127,19 +129,12 @@ def AdminLoggedin(m):
     markup = CreateButton(m, markup, "Check messages", 'Check')
     bot.send_message(cid, "Password accepted, welcome Administrator.\nWhat would you like to do now?", disable_notification=True, reply_markup=markup)
 
-@bot.callback_query_handler(lambda query : query.data != "")
-def FAQ_Callback(query):
-    # Fetch user id
-    user = query.message.chat.id
+### End of Admin Functions ###
 
-    # Fetch message and markup
-    message, markup, newState = FAQScript.Selected(query.data, UserStates[user] if user in UserStates else [])
-
-    # Update new state
-    UserStates[user] = newState
-
-    # Send message
-    SendMessage(user, message, markup)
+@bot.message_handler(commands=["help"])
+def Help_Command(m):
+    # Send media
+    SendMessage(m.chat.id, "/start\n/media")
 
 
 # @bot.callback_query_handler(lambda query : query.data != "")
@@ -150,10 +145,6 @@ def FAQ_Callback(query):
 #         SendMessage(query.message.chat.id, "Create new questions.")
 #     elif query.data == "Check":
 #         SendMessage(query.message.chat.id, "Check messages.")
-
-
-# def Test_Callback(query):
-#     SendMessage(query.message.chat.id, "What would you like to do?", GenerateReplyMarkup("Ask for help"))
 
 
 ### Bot execution starts here

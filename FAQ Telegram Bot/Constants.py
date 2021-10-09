@@ -12,10 +12,18 @@ IdentifierKey_Category = "Message"
 ImgExtensions = [".jpg", "jpeg", ".png"]
 VidExtensions = [".mp3", ".mp4"]
 
-# Media type constants
+# Inline Keyboard Button
+KeyboardButton_Back = "Back"
+
+# Media Type Constants
 MEDIA_NONE = 0
 MEDIA_IMAGE = 1
 MEDIA_VIDEO = 2
 
-# Inline Keyboard Button
-KeyboardButton_Back = "Back"
+# User Role Constants
+ROLE_DEFAULT = 0
+ROLE_ADMIN = 1
+
+# App State Constants
+APPSTATE_FAQ = 0
+APPSTATE_QUESTIONS = 1
