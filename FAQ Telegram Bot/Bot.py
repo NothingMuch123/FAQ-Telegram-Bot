@@ -65,12 +65,6 @@ def TraverseFAQScript(script : Category, state, current = 0) -> Category:
     else:
         return TraverseFAQScript(script.ActionList[state[current]], state, current + 1)
 
-
-def CreateButton(m,markup,text,callback):
-    a = InlineKeyboardButton(text,callback_data= callback)
-    markup.add(a)
-    return markup
-
 ### End of Helper Functions ###
 
 
@@ -306,16 +300,6 @@ def Cancel_Command(m):
 @bot.message_handler(func=lambda m : not m.text.startswith("/"), content_types=["text"])
 def AnyTextMessage(m):
     SendMessage(m.chat.id, "Type /start to begin or /help to find possible commands.")
-
-
-# @bot.callback_query_handler(lambda query : query.data != "")
-# def AdminFunctions(query):
-#     if query.data == "Edit":
-#         SendMessage(query.message.chat.id, "Edit questions.")
-#     elif query.data == "Create":
-#         SendMessage(query.message.chat.id, "Create new questions.")
-#     elif query.data == "Check":
-#         SendMessage(query.message.chat.id, "Check messages.")
 
 
 ### Bot execution starts here
