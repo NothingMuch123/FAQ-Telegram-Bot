@@ -306,11 +306,6 @@ def Questions_Command(m):
     )
     SendMessage(user.ID, "What would you like to do with the questions?", reply_markup=markup)
 
-
-@bot.message_handler(commands=["cancel"])
-def Cancel_Command(m):
-    SendMessage(m.chat.id, "Cancel command called called")
-
 ### End of Admin Functions ###
 
 # Capture all text messages that are not commands
