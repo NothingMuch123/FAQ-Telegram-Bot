@@ -1,5 +1,5 @@
 from Action import Action
-from Constants import ImgExtensions, VidExtensions, MEDIA_NONE, MEDIA_IMAGE, MEDIA_VIDEO, DataDirectory
+from Constants import ImgExtensions, VidExtensions, MEDIA_NONE, MEDIA_IMAGE, MEDIA_VIDEO, DataDirectory, ScriptLevel, NewLine, TabSpacing
 from telebot.types import InputMediaPhoto, InputMediaVideo
 
 class QandA(Action):
@@ -30,7 +30,31 @@ class QandA(Action):
 
     
     def ToString(self, level) -> str:
-        pass
+        # Level
+        result = (ScriptLevel * level) + NewLine
+
+        # Open curly braces
+        oneLessTabSpace = TabSpacing * (level - 1)
+        result += oneLessTabSpace + "{" + NewLine
+
+        # Question
+        tabSpace = TabSpacing * level
+        result += tabSpace + "\"Question\" : \"" + self.Name + "\"," + NewLine
+
+        # Answer
+        result += tabSpace + "\"Answer\" : \"" + self.Answer + "\""
+
+        # Media
+        if self.MediaType != MEDIA_NONE:
+            # Add comma and new line
+            result += ("," + NewLine)
+            result += tabSpace + "\"Media\" : \"" + self.Media + "\""
+        result += NewLine
+
+        # Close curly braces
+        result += oneLessTabSpace + "}" + NewLine
+
+        return result
 
 
     def IdentifyMedia(self, media : str) -> int:

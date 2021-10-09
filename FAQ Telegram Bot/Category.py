@@ -2,7 +2,7 @@
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 # Constant imports
-from Constants import KeyboardButton_Back
+from Constants import KeyboardButton_Back, ScriptLevel, TabSpacing, NewLine
 
 # Class imports
 from Action import Action
@@ -59,7 +59,28 @@ class Category(Action):
 
     
     def ToString(self, level) -> str:
-        pass
+        # Level
+        result = ScriptLevel * level + NewLine
+
+        # Open curly braces
+        oneLessTabSpace = TabSpacing * (level - 1)
+        result += oneLessTabSpace + "{" + NewLine
+
+        # Name
+        tabSpace = TabSpacing * level
+        result += tabSpace + "\"Name\" : \"" + self.Name + "\"," + NewLine
+
+        # Message
+        result += tabSpace + "\"Message\" : \"" + self.Message + "\"" + NewLine
+
+        # Close curly braces
+        result += oneLessTabSpace + "}" + NewLine
+
+        # Add all actions
+        for a in self.ActionList:
+            result += a.ToString(level + 1)
+
+        return result
 
 
     def AddAction(self, a):

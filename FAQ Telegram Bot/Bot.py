@@ -54,6 +54,10 @@ def AnyTextMessage(m):
 
 ### Command handling ###
 
+@bot.message_handler(commands=[""])
+def All_Command(m):
+    SendMessage(m.chat.id, "Universal command")
+
 @bot.message_handler(commands=["start"])
 def Start_Command(m):
     ### Send main message ###

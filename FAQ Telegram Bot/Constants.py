@@ -3,6 +3,8 @@ FAQScriptName = "FAQ.script"
 
 # FileIO characters
 ScriptLevel = "-"
+NewLine = "\n"
+TabSpacing = "\t"
 IdentifierKey_QandA = "Answer"
 IdentifierKey_Category = "Message"
 

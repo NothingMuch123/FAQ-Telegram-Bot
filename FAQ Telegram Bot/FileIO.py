@@ -2,7 +2,7 @@
 import json
 
 # Constant imports
-from Constants import ScriptLevel, IdentifierKey_Category, IdentifierKey_QandA
+from Constants import ScriptLevel, IdentifierKey_Category, IdentifierKey_QandA#, DataDirectory, FAQScriptName
 
 # Class imports
 from Category import Category
@@ -82,9 +82,20 @@ def LoadScript(path : str, script : Category):
 
 def SaveScript(path : str, script : Category):
     # Open script file
-    f = open(path, "r")
+    f = open(path, "w")
+
+    scriptStr = ""
 
     # Save Script
+    for a in script.ActionList:
+        scriptStr += a.ToString(1)
+
+    f.write(scriptStr)
     
     # Close script file
     f.close()
+
+
+# MainCategory = Category("Main", "Main message", True)
+# LoadScript(DataDirectory + FAQScriptName, MainCategory)
+# SaveScript(DataDirectory + "Save.script", MainCategory)
