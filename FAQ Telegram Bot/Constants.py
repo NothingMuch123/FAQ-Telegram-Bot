@@ -32,3 +32,16 @@ ROLE_LOCKED = 2 # Locked role will not be able to login
 # App State Constants
 APPSTATE_FAQ = 0
 APPSTATE_QUESTIONS = 1
+APPSTATE_QUESTIONS_CREATE_QNA = 1.1
+APPSTATE_QUESTIONS_CREATE_CATEGORY = 1.2
+APPSTATE_QUESTIONS_EDIT = 1.3
+
+# Modify Questions Callback 
+CALLBACK_QUESTIONS_CREATE_QNA = "Question_Create_QNA"
+CALLBACK_QUESTIONS_CREATE_CATEGORY = "Question_Create_Category"
+CALLBACK_QUESTIONS_EDIT = "Question_Edit"
+
+# Create Question Temp Data Keys
+KEY_CREATE_QUESTION_Q = "Create_Question_Q"
+KEY_CREATE_QUESTION_A = "Create_Question_A"
+KEY_CREATE_QUESTION_C = "Create_Question_C"
