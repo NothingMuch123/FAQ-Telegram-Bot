@@ -1,5 +1,9 @@
+# Files and Paths
 DataDirectory = "FAQ Telegram Bot/Data/"
 FAQScriptName = "FAQ.script"
+
+# Settings (To be moved to Settings.json eventually)
+MaxLoginAttempts = 3
 
 # FileIO characters
 ScriptLevel = "-"
@@ -23,6 +27,7 @@ MEDIA_VIDEO = 2
 # User Role Constants
 ROLE_DEFAULT = 0
 ROLE_ADMIN = 1
+ROLE_LOCKED = 2 # Locked role will not be able to login
 
 # App State Constants
 APPSTATE_FAQ = 0
