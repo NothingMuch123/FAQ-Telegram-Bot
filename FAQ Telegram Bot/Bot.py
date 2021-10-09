@@ -91,7 +91,13 @@ def Help_Command(m):
 
 @bot.message_handler(commands=["feedback"])
 def Feedback_Command(m):
-    pass
+    user = FetchUser(m.chat.id)
+    if user.Role == ROLE_ADMIN:
+        # View feedbacks
+        pass
+    else:
+        # Write feedback
+        pass
 
 ### End of Generic Command handling ###
 
