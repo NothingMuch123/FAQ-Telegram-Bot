@@ -13,9 +13,9 @@ from BotUser import BotUser
 # Constant imports
 from Constants import DataDirectory, FAQScriptName
 from Constants import ROLE_DEFAULT, ROLE_ADMIN, ROLE_LOCKED
-from Constants import CALLBACK_QUESTIONS_CREATE_QNA, CALLBACK_QUESTIONS_CREATE_CATEGORY, CALLBACK_QUESTIONS_EDIT
-from Constants import APPSTATE_FAQ, APPSTATE_QUESTIONS, APPSTATE_QUESTIONS_CREATE_CATEGORY, APPSTATE_QUESTIONS_CREATE_QNA
-from Constants import KEY_CREATE_QUESTION_Q, KEY_CREATE_QUESTION_A, KEY_CREATE_QUESTION_C
+from Constants import CALLBACK_QUESTIONS_CREATE_QNA, CALLBACK_QUESTIONS_CREATE_CATEGORY, CALLBACK_QUESTIONS_EDIT, CALLBACK_FEEDBACK_EXIT, CALLBACK_FEEDBACK_REPLY
+from Constants import APPSTATE_FAQ, APPSTATE_QUESTIONS, APPSTATE_QUESTIONS_CREATE_CATEGORY, APPSTATE_QUESTIONS_CREATE_QNA, APPSTATE_FEEDBACK
+from Constants import KEY_CREATE_QUESTION_Q, KEY_CREATE_QUESTION_A, KEY_CREATE_QUESTION_C, KEY_FEEDBACK_REPLY_ID, KEY_FEEDBACK_REPLY_INDEX, KEY_FEEDBACK_REPLY_REPLY
 
 # Method imports
 from FileIO import LoadScript, SaveScript
@@ -77,7 +77,9 @@ def Start_Command(m):
     message, markup, newState = FAQScript.Selected(None, [])
     
     # Reset user state
-    FetchUser(m.chat.id).ResetFAQState()
+    user = FetchUser(m.chat.id)
+    user.AppState = APPSTATE_FAQ
+    user.ResetFAQState()
 
     # Send message
     SendMessage(m.chat.id, message, markup)
@@ -93,10 +95,27 @@ def Help_Command(m):
 def Feedback_Command(m):
     user = FetchUser(m.chat.id)
     if user.Role == ROLE_ADMIN:
+        # Update user state to feedback
+        user.AppState = APPSTATE_FEEDBACK
+
         # View feedbacks
-        pass
+        markup = InlineKeyboardMarkup()
+        # Run through all registered users
+        for u in UserStates.values():
+            # Ensure that you do not answer your own feedback
+            #if u != user:
+            u.AddFeedbacksIntoMarkup(markup)
+        # Add exit button
+        markup.add(InlineKeyboardButton("Exit feedback", callback_data=CALLBACK_FEEDBACK_EXIT))
+        SendMessage(user.ID, "Which feedback do you like to view?", reply_markup=markup)
     else:
         # Write feedback
+        split = m.text.split(" ")
+        if len(split) < 2:
+            SendMessage(user.ID, "No feedback found, please try again")
+        else:
+            user.WriteFeedback(" ".join(split[1:]))
+            SendMessage(user.ID, "Feedback recorded, we will get back to your shortly")
         pass
 
 ### End of Generic Command handling ###
@@ -129,10 +148,35 @@ def Callback(query):
             user.AppState = APPSTATE_QUESTIONS_CREATE_CATEGORY
             SendMessage(user.ID, "Please write the name of the Category")
             bot.register_next_step_handler_by_chat_id(user.ID, Create_Question_Category)
-            pass
         elif query.data == CALLBACK_QUESTIONS_EDIT:
             # Edit action from current category
             pass
+    elif user.AppState == APPSTATE_FEEDBACK:
+        # Admin feedback state
+        if query.data == CALLBACK_FEEDBACK_EXIT:
+            # Exiting feedback state
+            user.AppState = APPSTATE_FAQ
+        else:
+            split = query.data.split(BotUser.FEEDBACK_SPLIT)
+            if len(split) >= 2:
+                feedbackUser = FetchUser(int(split[0]))
+                feedback = feedbackUser.RetrieveFeedback(split[1])
+                if feedback:
+                    if query.data.endswith(CALLBACK_FEEDBACK_REPLY):
+                        # Write feedback details into temp data
+                        user.TempData[KEY_FEEDBACK_REPLY_ID] = feedbackUser.ID
+                        user.TempData[KEY_FEEDBACK_REPLY_INDEX] = split[1]
+                        # Replying to feedback
+                        SendMessage(user.ID, "Please enter the feedback's reply")
+                        bot.register_next_step_handler_by_chat_id(user.ID, Reply_Feedback)
+                    else:
+                        # Sending feedback with reply button
+                        SendMessage(user.ID, "User " + str(feedbackUser.ID) + " feedbacks:\n" + feedback,
+                        reply_markup=InlineKeyboardMarkup().add(InlineKeyboardButton("Reply to feedback", callback_data=query.data + BotUser.FEEDBACK_SPLIT + CALLBACK_FEEDBACK_REPLY)).add(
+                            InlineKeyboardButton("Exit feedback", callback_data=CALLBACK_FEEDBACK_EXIT)))
+                else:
+                    SendMessage(user.ID, "Could not find feedback from " + feedbackUser.ID)
+                    Feedback_Command(query.message)
 
 
 ### End of CallBack Query handling ###
@@ -248,6 +292,66 @@ def Create_Question_Category_Confirmation(m):
         bot.register_next_step_handler_by_chat_id(user.ID, Create_Question_Category_Confirmation)
 
 ### End of Create Category Next Step Handlers ###
+
+
+### Reply Feedback Next Step Handlers ###
+
+def Reply_Feedback(m):
+    user = FetchUser(m.chat.id)
+
+    # Store in temp data
+    user.TempData[KEY_FEEDBACK_REPLY_REPLY] = m.text
+
+    # Prompt for confirmation
+    SendMessage(user.ID, "Please confirm the Feedback reply(Y/N)\nReply: " + m.text)
+    bot.register_next_step_handler_by_chat_id(user.ID, Reply_Feedback_Confirm)
+
+
+def Reply_Feedback_Confirm(m):
+    user = FetchUser(m.chat.id)
+    if m.text == "Y" or m.text == "y":
+        # Send feedback reply to feedback user
+        feedbackUser = FetchUser(user.TempData[KEY_FEEDBACK_REPLY_ID])
+        feedback = feedbackUser.RetrieveFeedback(user.TempData[KEY_FEEDBACK_REPLY_INDEX])
+        if feedback:
+            # Send reply to feedback user
+            SendMessage(feedbackUser.ID, "Feedback:\n" + feedback + "\n\n" + "Reply:\n" + user.TempData[KEY_FEEDBACK_REPLY_REPLY])
+
+            # Update admin that feedback replied
+            SendMessage(user.ID, "Feedback replied successfully")
+
+            # Delete feedback
+            feedbackUser.RemoveFeedback(user.TempData[KEY_FEEDBACK_REPLY_INDEX])
+
+        else:
+            SendMessage(user.ID, "No feedback found, no reply sent")
+
+        # Delete temp data
+        del user.TempData[KEY_FEEDBACK_REPLY_ID]
+        del user.TempData[KEY_FEEDBACK_REPLY_INDEX]
+        del user.TempData[KEY_FEEDBACK_REPLY_REPLY]
+
+        # Update app state back to Feedback
+        user.AppState = APPSTATE_FEEDBACK
+        Feedback_Command(m)
+    elif m.text == "N" or m.text == "n":
+        # Send cancel message
+        SendMessage(user.ID, "Feedback reply was not sent")
+
+        # Delete temp data
+        del user.TempData[KEY_FEEDBACK_REPLY_ID]
+        del user.TempData[KEY_FEEDBACK_REPLY_INDEX]
+        del user.TempData[KEY_FEEDBACK_REPLY_REPLY]
+
+        # Update app state back to Feedback
+        user.AppState = APPSTATE_FEEDBACK
+        Feedback_Command(m)
+    else:
+        # Wrong input
+        SendMessage(user.ID, "Invalid Confirmation, please enter \"Y\" or \"N\"")
+        bot.register_next_step_handler_by_chat_id(user.ID, Reply_Feedback_Confirm)
+
+### End of Reply Feedback Next Step Handlers ###
 
 
 ### Admin Functions ###
