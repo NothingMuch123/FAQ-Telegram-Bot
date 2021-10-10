@@ -103,8 +103,8 @@ def Feedback_Command(m):
         # Run through all registered users
         for u in UserStates.values():
             # Ensure that you do not answer your own feedback
-            #if u != user:
-            u.AddFeedbacksIntoMarkup(markup)
+            if u != user:
+                u.AddFeedbacksIntoMarkup(markup)
         # Add exit button
         markup.add(InlineKeyboardButton("Exit feedback", callback_data=CALLBACK_FEEDBACK_EXIT))
         SendMessage(user.ID, "Which feedback do you like to view?", reply_markup=markup)
