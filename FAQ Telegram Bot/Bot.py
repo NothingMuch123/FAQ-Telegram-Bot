@@ -13,7 +13,7 @@ from BotUser import BotUser
 # Constant imports
 from Constants import DataDirectory, FAQScriptName
 from Constants import ROLE_DEFAULT, ROLE_ADMIN, ROLE_LOCKED
-from Constants import CALLBACK_QUESTIONS_CREATE_QNA, CALLBACK_QUESTIONS_CREATE_CATEGORY, CALLBACK_QUESTIONS_EDIT, CALLBACK_FEEDBACK_EXIT, CALLBACK_FEEDBACK_REPLY
+from Constants import CALLBACK_QUESTIONS_CREATE_QNA, CALLBACK_QUESTIONS_CREATE_CATEGORY, CALLBACK_QUESTIONS_EDIT, CALLBACK_EXIT, CALLBACK_FEEDBACK_REPLY
 from Constants import APPSTATE_FAQ, APPSTATE_QUESTIONS, APPSTATE_QUESTIONS_CREATE_CATEGORY, APPSTATE_QUESTIONS_CREATE_QNA, APPSTATE_FEEDBACK
 from Constants import KEY_CREATE_QUESTION_Q, KEY_CREATE_QUESTION_A, KEY_CREATE_QUESTION_C, KEY_FEEDBACK_REPLY_ID, KEY_FEEDBACK_REPLY_INDEX, KEY_FEEDBACK_REPLY_REPLY
 
@@ -106,7 +106,7 @@ def Feedback_Command(m):
             if u != user:
                 u.AddFeedbacksIntoMarkup(markup)
         # Add exit button
-        markup.add(InlineKeyboardButton("Exit feedback", callback_data=CALLBACK_FEEDBACK_EXIT))
+        markup.add(InlineKeyboardButton("Exit feedback", callback_data=CALLBACK_EXIT))
         SendMessage(user.ID, "Which feedback do you like to view?", reply_markup=markup)
     else:
         # Write feedback
@@ -153,7 +153,7 @@ def Callback(query):
             pass
     elif user.AppState == APPSTATE_FEEDBACK:
         # Admin feedback state
-        if query.data == CALLBACK_FEEDBACK_EXIT:
+        if query.data == CALLBACK_EXIT:
             # Exiting feedback state
             user.AppState = APPSTATE_FAQ
         else:
@@ -173,7 +173,7 @@ def Callback(query):
                         # Sending feedback with reply button
                         SendMessage(user.ID, "User " + str(feedbackUser.ID) + " feedbacks:\n" + feedback,
                         reply_markup=InlineKeyboardMarkup().add(InlineKeyboardButton("Reply to feedback", callback_data=query.data + BotUser.FEEDBACK_SPLIT + CALLBACK_FEEDBACK_REPLY)).add(
-                            InlineKeyboardButton("Exit feedback", callback_data=CALLBACK_FEEDBACK_EXIT)))
+                            InlineKeyboardButton("Exit feedback", callback_data=CALLBACK_EXIT)))
                 else:
                     SendMessage(user.ID, "Could not find feedback from " + feedbackUser.ID)
                     Feedback_Command(query.message)

@@ -48,7 +48,7 @@ KEY_CREATE_QUESTION_A = "Create_Question_A"
 KEY_CREATE_QUESTION_C = "Create_Question_C"
 
 # Feedback Callback
-CALLBACK_FEEDBACK_EXIT = "Feedback_Exit"
+CALLBACK_EXIT = "Exit"
 CALLBACK_FEEDBACK_REPLY = "Reply"
 
 # Feedback Temp Data Keys
