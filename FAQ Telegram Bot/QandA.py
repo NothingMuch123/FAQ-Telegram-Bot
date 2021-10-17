@@ -13,8 +13,8 @@ class QandA(Action):
         self.MediaType = self.IdentifyMedia(media)
 
 
-    def DisplayMessage(self):
-        if self.MediaType == MEDIA_NONE:
+    def DisplayMessage(self, textOnly : bool = False):
+        if self.MediaType == MEDIA_NONE or textOnly:
             return self.Answer
         else:
             media = open(DataDirectory + self.Media, "rb")

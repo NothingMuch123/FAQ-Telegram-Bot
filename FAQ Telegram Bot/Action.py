@@ -8,7 +8,7 @@ class Action:
         return self.Name
 
 
-    def DisplayMessage(self):
+    def DisplayMessage(self, textOnly : bool = False):
         pass
 
 
