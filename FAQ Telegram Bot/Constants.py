@@ -43,9 +43,9 @@ CALLBACK_QUESTIONS_CREATE_CATEGORY = "Question_Create_Category"
 CALLBACK_QUESTIONS_EDIT = "Question_Edit"
 
 # Create Question Temp Data Keys
-KEY_CREATE_QUESTION_Q = "Create_Question_Q"
-KEY_CREATE_QUESTION_A = "Create_Question_A"
-KEY_CREATE_QUESTION_C = "Create_Question_C"
+KEY_CREATE_QUESTION_Q = "Create_Question_Q" # Question key
+KEY_CREATE_QUESTION_A = "Create_Question_A" # Answer key
+KEY_CREATE_QUESTION_C = "Create_Question_C" # Callback key
 
 # Feedback Callback
 CALLBACK_EXIT = "Exit"

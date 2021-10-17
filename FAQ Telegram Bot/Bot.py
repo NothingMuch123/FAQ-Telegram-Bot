@@ -116,7 +116,13 @@ def Feedback_Command(m):
         else:
             user.WriteFeedback(" ".join(split[1:]))
             SendMessage(user.ID, "Feedback recorded, we will get back to your shortly")
-        pass
+            
+
+@bot.message_handler(commands=["reset"])
+def Reset_Command(m):
+    user = FetchUser(m.chat.id)
+    user.AppState = APPSTATE_FAQ
+
 
 ### End of Generic Command handling ###
 
@@ -125,9 +131,16 @@ def Feedback_Command(m):
 
 @bot.callback_query_handler(lambda query : query.data != "")
 def Callback(query):
-    # Fetch user id
+    # Fetch user
     user = FetchUser(query.message.chat.id)
 
+    # Universal exit callback
+    if query.data == CALLBACK_EXIT:
+        # Reset state
+        Reset_Command(query.message)
+        return
+
+    # Run through each state to determine action
     if user.AppState == APPSTATE_FAQ:
         # Fetch message and markup
         message, markup, newState = FAQScript.Selected(query.data, user.FAQState)
@@ -153,30 +166,26 @@ def Callback(query):
             pass
     elif user.AppState == APPSTATE_FEEDBACK:
         # Admin feedback state
-        if query.data == CALLBACK_EXIT:
-            # Exiting feedback state
-            user.AppState = APPSTATE_FAQ
-        else:
-            split = query.data.split(BotUser.FEEDBACK_SPLIT)
-            if len(split) >= 2:
-                feedbackUser = FetchUser(int(split[0]))
-                feedback = feedbackUser.RetrieveFeedback(split[1])
-                if feedback:
-                    if query.data.endswith(CALLBACK_FEEDBACK_REPLY):
-                        # Write feedback details into temp data
-                        user.TempData[KEY_FEEDBACK_REPLY_ID] = feedbackUser.ID
-                        user.TempData[KEY_FEEDBACK_REPLY_INDEX] = split[1]
-                        # Replying to feedback
-                        SendMessage(user.ID, "Please enter the feedback's reply")
-                        bot.register_next_step_handler_by_chat_id(user.ID, Reply_Feedback)
-                    else:
-                        # Sending feedback with reply button
-                        SendMessage(user.ID, "User " + str(feedbackUser.ID) + " feedbacks:\n" + feedback,
-                        reply_markup=InlineKeyboardMarkup().add(InlineKeyboardButton("Reply to feedback", callback_data=query.data + BotUser.FEEDBACK_SPLIT + CALLBACK_FEEDBACK_REPLY)).add(
-                            InlineKeyboardButton("Exit feedback", callback_data=CALLBACK_EXIT)))
+        split = query.data.split(BotUser.FEEDBACK_SPLIT)
+        if len(split) >= 2:
+            feedbackUser = FetchUser(int(split[0]))
+            feedback = feedbackUser.RetrieveFeedback(split[1])
+            if feedback:
+                if query.data.endswith(CALLBACK_FEEDBACK_REPLY):
+                    # Write feedback details into temp data
+                    user.TempData[KEY_FEEDBACK_REPLY_ID] = feedbackUser.ID
+                    user.TempData[KEY_FEEDBACK_REPLY_INDEX] = split[1]
+                    # Replying to feedback
+                    SendMessage(user.ID, "Please enter the feedback's reply")
+                    bot.register_next_step_handler_by_chat_id(user.ID, Reply_Feedback)
                 else:
-                    SendMessage(user.ID, "Could not find feedback from " + feedbackUser.ID)
-                    Feedback_Command(query.message)
+                    # Sending feedback with reply button
+                    SendMessage(user.ID, "User " + str(feedbackUser.ID) + " feedbacks:\n" + feedback,
+                    reply_markup=InlineKeyboardMarkup().add(InlineKeyboardButton("Reply to feedback", callback_data=query.data + BotUser.FEEDBACK_SPLIT + CALLBACK_FEEDBACK_REPLY)).add(
+                        InlineKeyboardButton("Exit feedback", callback_data=CALLBACK_EXIT)))
+            else:
+                SendMessage(user.ID, "Could not find feedback from " + feedbackUser.ID)
+                Feedback_Command(query.message)
 
 
 ### End of CallBack Query handling ###
