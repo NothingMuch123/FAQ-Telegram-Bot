@@ -271,7 +271,7 @@ def Create_Question_QNA_Confirm(m):
         TraverseFAQScript(FAQScript, user.FAQState).AddAction(QandA(user.TempData[KEY_CREATE_QUESTION_Q], user.TempData[KEY_CREATE_QUESTION_A], None))
 
         # Save script
-        SaveScript(DataDirectory + "Save.script", FAQScript)
+        SaveScript(DataDirectory + FAQScriptName, FAQScript)
 
         # Delete temp data
         del user.TempData[KEY_CREATE_QUESTION_Q]
@@ -321,7 +321,7 @@ def Create_Question_Category_Confirmation(m):
         TraverseFAQScript(FAQScript, user.FAQState).AddAction(Category(user.TempData[KEY_CREATE_QUESTION_C], None))
 
         # Save script
-        SaveScript(DataDirectory + "Save.script", FAQScript)
+        SaveScript(DataDirectory + FAQScriptName, FAQScript)
 
         # Delete temp data
         del user.TempData[KEY_CREATE_QUESTION_C]
@@ -392,7 +392,7 @@ def Edit_Question_Q_Confirm(m):
             action.Name = user.TempData[KEY_EDIT_QUESTION_Q]
 
         # Save script
-        SaveScript(DataDirectory + "Save.script", FAQScript)
+        SaveScript(DataDirectory + FAQScriptName, FAQScript)
 
         # Delete temp data
         del user.TempData[KEY_EDIT_QUESTION_ACTION]
@@ -431,7 +431,7 @@ def Edit_Question_A_Confirm(m):
                 action.Message = user.TempData[KEY_EDIT_QUESTION_A]
 
         # Save script
-        SaveScript(DataDirectory + "Save.script", FAQScript)
+        SaveScript(DataDirectory + FAQScriptName, FAQScript)
 
         # Delete temp data
         del user.TempData[KEY_EDIT_QUESTION_ACTION]
