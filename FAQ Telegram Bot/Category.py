@@ -2,7 +2,7 @@
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 # Constant imports
-from Constants import KeyboardButton_Back, ScriptLevel, TabSpacing, NewLine
+from Constants import CALLBACK_BACK, ScriptLevel, TabSpacing, NewLine
 
 # Class imports
 from Action import Action
@@ -23,7 +23,9 @@ class Category(Action):
         self.SkipBack = skipBack
 
 
-    def DisplayMessage(self):
+    def DisplayMessage(self, textOnly : bool = False):
+        if textOnly:
+            return self.Message
         return self.Message, self.GenerateKeyboardMarkup()
 
 
@@ -33,7 +35,7 @@ class Category(Action):
         stateLength = len(state)
         if stateLength > 0:
             # Check if back is pressed
-            if stateLength == 1 and callback == KeyboardButton_Back:
+            if stateLength == 1 and callback == CALLBACK_BACK:
                 return self.Message, self.GenerateKeyboardMarkup(), []
             else:
                 message, markup, newState = self.ActionList[state[0]].Selected(callback, state[1:])
@@ -87,16 +89,18 @@ class Category(Action):
         self.ActionList.append(a)
 
 
-    def GenerateKeyboardMarkup(self) -> InlineKeyboardMarkup:
+    def GenerateKeyboardMarkup(self, numberCallback : bool = False, forceIgnoreBack : bool = False) -> InlineKeyboardMarkup:
         k = InlineKeyboardMarkup()
 
         # Add all actions as keyboard button
+        count = 0
         for a in self.ActionList:
             name = a.DisplayName()
-            k.add(InlineKeyboardButton(name, callback_data=name))
+            k.add(InlineKeyboardButton(name, callback_data=name if not numberCallback else str(count)))
+            count += 1
 
         # Add back keyboard button
-        if not self.SkipBack:
-            k.add(InlineKeyboardButton(KeyboardButton_Back, callback_data=KeyboardButton_Back))
+        if not self.SkipBack and not forceIgnoreBack:
+            k.add(InlineKeyboardButton(CALLBACK_BACK, callback_data=CALLBACK_BACK))
 
         return k

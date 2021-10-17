@@ -1,5 +1,6 @@
 # Python libs import
 import json
+from threading import current_thread
 
 # Telebot imports
 from telebot import TeleBot
@@ -11,11 +12,11 @@ from Category import Category
 from BotUser import BotUser
 
 # Constant imports
-from Constants import DataDirectory, FAQScriptName
+from Constants import DataDirectory, FAQScriptName, NewLine
 from Constants import ROLE_DEFAULT, ROLE_ADMIN, ROLE_LOCKED
-from Constants import CALLBACK_QUESTIONS_CREATE_QNA, CALLBACK_QUESTIONS_CREATE_CATEGORY, CALLBACK_QUESTIONS_EDIT, CALLBACK_EXIT, CALLBACK_FEEDBACK_REPLY
-from Constants import APPSTATE_FAQ, APPSTATE_QUESTIONS, APPSTATE_QUESTIONS_CREATE_CATEGORY, APPSTATE_QUESTIONS_CREATE_QNA, APPSTATE_FEEDBACK
-from Constants import KEY_CREATE_QUESTION_Q, KEY_CREATE_QUESTION_A, KEY_CREATE_QUESTION_C, KEY_FEEDBACK_REPLY_ID, KEY_FEEDBACK_REPLY_INDEX, KEY_FEEDBACK_REPLY_REPLY
+from Constants import CALLBACK_QUESTIONS_CREATE_QNA, CALLBACK_QUESTIONS_CREATE_CATEGORY, CALLBACK_QUESTIONS_EDIT, CALLBACK_QUESTIONS_EDIT_Q, CALLBACK_QUESTIONS_EDIT_A, CALLBACK_EXIT, CALLBACK_FEEDBACK_REPLY
+from Constants import APPSTATE_FAQ, APPSTATE_QUESTIONS, APPSTATE_QUESTIONS_EDIT, APPSTATE_FEEDBACK
+from Constants import KEY_CREATE_QUESTION_Q, KEY_CREATE_QUESTION_A, KEY_CREATE_QUESTION_C, KEY_EDIT_QUESTION_ACTION, KEY_EDIT_QUESTION_Q, KEY_EDIT_QUESTION_A, KEY_FEEDBACK_REPLY_ID, KEY_FEEDBACK_REPLY_INDEX, KEY_FEEDBACK_REPLY_REPLY
 
 # Method imports
 from FileIO import LoadScript, SaveScript
@@ -150,20 +151,63 @@ def Callback(query):
 
         # Send message
         SendMessage(query.message.chat.id, message, markup)
+
     elif user.AppState == APPSTATE_QUESTIONS:
         if query.data == CALLBACK_QUESTIONS_CREATE_QNA:
             # Creating new question
-            user.AppState = APPSTATE_QUESTIONS_CREATE_QNA
             SendMessage(user.ID, "Please write the question to ask")
             bot.register_next_step_handler_by_chat_id(user.ID, Create_Question_QNA_Q)
         elif query.data == CALLBACK_QUESTIONS_CREATE_CATEGORY:
             # Create new category
-            user.AppState = APPSTATE_QUESTIONS_CREATE_CATEGORY
             SendMessage(user.ID, "Please write the name of the Category")
             bot.register_next_step_handler_by_chat_id(user.ID, Create_Question_Category)
         elif query.data == CALLBACK_QUESTIONS_EDIT:
             # Edit action from current category
-            pass
+            user.AppState = APPSTATE_QUESTIONS_EDIT
+
+            # Traverse script
+            markup = TraverseFAQScript(FAQScript, user.FAQState).GenerateKeyboardMarkup(True, True).add(InlineKeyboardButton("Exit", callback_data=CALLBACK_EXIT))
+            SendMessage(user.ID, "Which question do you wish to edit?", reply_markup=markup)
+    elif user.AppState == APPSTATE_QUESTIONS_EDIT:
+        if query.data == CALLBACK_QUESTIONS_EDIT_Q:
+            action = user.TempData[KEY_EDIT_QUESTION_ACTION]
+            if type(action) is QandA:
+                SendMessage(user.ID, "Q: " + action.DisplayName() + (NewLine * 2) + "Please write the new question")
+            elif type(action) is Category:
+                SendMessage(user.ID, "Name: " + action.DisplayName() + (NewLine * 2) + "Please write the new Category name")
+            bot.register_next_step_handler_by_chat_id(user.ID, Edit_Question_Q)
+        elif query.data == CALLBACK_QUESTIONS_EDIT_A:
+            action = user.TempData[KEY_EDIT_QUESTION_ACTION]
+            if type(action) is QandA:
+                SendMessage(user.ID, "A: " + action.DisplayMessage(True) + (NewLine * 2) + "Please write the new answer")
+            elif type(action) is Category:
+                SendMessage(user.ID, "Message: " + action.DisplayMessage(True) + (NewLine * 2) + "Please write the new Category message")
+            bot.register_next_step_handler_by_chat_id(user.ID, Edit_Question_A)
+        else:
+            # Current category
+            current = TraverseFAQScript(FAQScript, user.FAQState)
+            actionIndex = int(query.data)
+            if actionIndex >= 0 and actionIndex < len(current.ActionList):
+                # Valid action found, store action index into temp data
+                action = current.ActionList[actionIndex]
+                user.TempData[KEY_EDIT_QUESTION_ACTION] = action
+
+                # Determine Q&A or Category
+                if type(action) is QandA:
+                    # Question
+                    markup = InlineKeyboardMarkup().add(
+                        InlineKeyboardButton("Edit Question", callback_data=CALLBACK_QUESTIONS_EDIT_Q)).add(
+                        InlineKeyboardButton("Edit Answer", callback_data=CALLBACK_QUESTIONS_EDIT_A))
+                    SendMessage(user.ID, "Q: " + action.DisplayName() + (NewLine * 2) + "A: " + action.DisplayMessage(True), reply_markup=markup)
+                elif type(action) is Category:
+                    # Category
+                    markup = InlineKeyboardMarkup().add(
+                        InlineKeyboardButton("Edit Category Name", callback_data=CALLBACK_QUESTIONS_EDIT_Q)).add(
+                        InlineKeyboardButton("Edit Category Message", callback_data=CALLBACK_QUESTIONS_EDIT_A))
+                    SendMessage(user.ID, "Name: " + action.DisplayName() + (NewLine * 2) + "Message: " + action.DisplayMessage(True), reply_markup=markup)
+            else:
+                markup = current.GenerateKeyboardMarkup(True, True).add(InlineKeyboardButton("Exit", callback_data=CALLBACK_EXIT))
+                SendMessage(user.ID, "No question found at " + query.data, reply_markup=markup)
     elif user.AppState == APPSTATE_FEEDBACK:
         # Admin feedback state
         split = query.data.split(BotUser.FEEDBACK_SPLIT)
@@ -175,6 +219,7 @@ def Callback(query):
                     # Write feedback details into temp data
                     user.TempData[KEY_FEEDBACK_REPLY_ID] = feedbackUser.ID
                     user.TempData[KEY_FEEDBACK_REPLY_INDEX] = split[1]
+
                     # Replying to feedback
                     SendMessage(user.ID, "Please enter the feedback's reply")
                     bot.register_next_step_handler_by_chat_id(user.ID, Reply_Feedback)
@@ -301,6 +346,118 @@ def Create_Question_Category_Confirmation(m):
         bot.register_next_step_handler_by_chat_id(user.ID, Create_Question_Category_Confirmation)
 
 ### End of Create Category Next Step Handlers ###
+
+
+### Edit Q&A Next Step Handlers ###
+
+def Edit_Question_Q(m):
+    user = FetchUser(m.chat.id)
+    
+    # Register answer into user temp data
+    user.TempData[KEY_EDIT_QUESTION_Q] = m.text
+
+    # Prompt for confirmation
+    action = user.TempData[KEY_EDIT_QUESTION_ACTION]
+    if type(action) is QandA:
+        SendMessage(user.ID, "Please confirm the Question(Y/N)" + (NewLine * 2) + "Q: " + m.text)
+    elif type(action) is Category:
+        SendMessage(user.ID, "Please confirm the Category Name(Y/N)" + (NewLine * 2) + "Name: " + m.text)
+
+    # Register next step to answer
+    bot.register_next_step_handler_by_chat_id(user.ID, Edit_Question_Q_Confirm)
+
+def Edit_Question_A(m):
+    user = FetchUser(m.chat.id)
+    
+    # Register answer into user temp data
+    user.TempData[KEY_EDIT_QUESTION_A] = m.text
+
+    # Prompt for confirmation
+    action = user.TempData[KEY_EDIT_QUESTION_ACTION]
+    if type(action) is QandA:
+        SendMessage(user.ID, "Please confirm the Answer(Y/N)" + (NewLine * 2) + "A: " + m.text)
+    elif type(action) is Category:
+        SendMessage(user.ID, "Please confirm the Category message(Y/N)" + (NewLine * 2) + "Message: " + m.text)
+
+    # Register next step to answer
+    bot.register_next_step_handler_by_chat_id(user.ID, Edit_Question_A_Confirm)
+
+
+def Edit_Question_Q_Confirm(m):
+    user = FetchUser(m.chat.id)
+    if m.text == "Y" or m.text == "y":
+        # Edit into action
+        action = user.TempData[KEY_EDIT_QUESTION_ACTION]
+        if action:
+            action.Name = user.TempData[KEY_EDIT_QUESTION_Q]
+
+        # Save script
+        SaveScript(DataDirectory + "Save.script", FAQScript)
+
+        # Delete temp data
+        del user.TempData[KEY_EDIT_QUESTION_ACTION]
+        del user.TempData[KEY_EDIT_QUESTION_Q]
+
+        # Send added message
+        SendMessage(user.ID, ("Category name" if type(action) is Category else "Question") + " updated successfully")
+
+        # Update app state back to FAQ
+        user.AppState = APPSTATE_FAQ
+    elif m.text == "N" or m.text == "n":
+        # Send cancel message
+        SendMessage(user.ID, "Edit cancelled")
+
+        # Delete temp data
+        del user.TempData[KEY_EDIT_QUESTION_ACTION]
+        del user.TempData[KEY_EDIT_QUESTION_Q]
+
+        # Update app state back to FAQ
+        user.AppState = APPSTATE_FAQ
+    else:
+        # Wrong input
+        SendMessage(user.ID, "Invalid Confirmation, please enter \"Y\" or \"N\"")
+        bot.register_next_step_handler_by_chat_id(user.ID, Edit_Question_Q_Confirm)
+
+
+def Edit_Question_A_Confirm(m):
+    user = FetchUser(m.chat.id)
+    if m.text == "Y" or m.text == "y":
+        # Edit into action
+        action = user.TempData[KEY_EDIT_QUESTION_ACTION]
+        if action:
+            if type(action) is QandA:
+                action.Answer = user.TempData[KEY_EDIT_QUESTION_A]
+            elif type(action) is Category:
+                action.Message = user.TempData[KEY_EDIT_QUESTION_A]
+
+        # Save script
+        SaveScript(DataDirectory + "Save.script", FAQScript)
+
+        # Delete temp data
+        del user.TempData[KEY_EDIT_QUESTION_ACTION]
+        del user.TempData[KEY_EDIT_QUESTION_A]
+
+        # Send added message
+        SendMessage(user.ID, ("Category message" if type(action) is Category else "Answer") + " updated successfully")
+
+        # Update app state back to FAQ
+        user.AppState = APPSTATE_FAQ
+    elif m.text == "N" or m.text == "n":
+        # Send cancel message
+        SendMessage(user.ID, "Edit cancelled")
+
+        # Delete temp data
+        del user.TempData[KEY_EDIT_QUESTION_ACTION]
+        del user.TempData[KEY_EDIT_QUESTION_A]
+
+        # Update app state back to FAQ
+        user.AppState = APPSTATE_FAQ
+    else:
+        # Wrong input
+        SendMessage(user.ID, "Invalid Confirmation, please enter \"Y\" or \"N\"")
+        bot.register_next_step_handler_by_chat_id(user.ID, Edit_Question_A_Confirm)
+
+### End of Edit Q&A Next Step Handlers ###
 
 
 ### Reply Feedback Next Step Handlers ###
